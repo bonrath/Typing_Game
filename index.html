@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Khmer & English Typing Game Center - Learn & Play Typing Games</title>
-    <meta name="description" content="An interactive, multi-game typing center supporting both Khmer and English languages. Practice typing with Ghost Typing, Meteor Laser, Synthwave Racer, and Word Ninja.">
+    <meta name="description" content="An interactive, multi-game typing center supporting both Khmer and English languages. Practice typing with Ghost Typing, Meteor Laser, Synthwave Racer, Keyboard Ninja, and 3D Space Warp.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,8 +103,15 @@
                         <button class="btn btn-mode" data-mode="ninja">
                             <span class="mode-icon">⚔️</span>
                             <div class="mode-info">
-                                <span class="mode-title">Word Ninja</span>
+                                <span class="mode-title">Keyboard Ninja</span>
                                 <span class="mode-desc">ល្បែងកាប់អក្សរហោះ</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-mode" data-mode="warp">
+                            <span class="mode-icon">🌌</span>
+                            <div class="mode-info">
+                                <span class="mode-title">3D Space Warp</span>
+                                <span class="mode-desc">សកលលោក 3D</span>
                             </div>
                         </button>
                     </div>
@@ -187,6 +194,12 @@
                         <!-- Space mode spaceship (hidden by default) -->
                         <div class="spaceship" id="spaceship" style="display: none;">🚀</div>
                         
+                        <!-- 3D cockpit HUD (hidden by default) -->
+                        <div class="space-hud" id="spaceHud" style="display: none;">
+                            <div class="hud-ring"></div>
+                            <div class="hud-crosshair">+</div>
+                        </div>
+
                         <!-- Synthwave Racer Track (hidden by default) -->
                         <div class="synthwave-track" id="synthwaveTrack" style="display: none;">
                             <div class="racer-prompt-container">

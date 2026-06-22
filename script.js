@@ -1,7 +1,7 @@
 /**
  * Khmer & English Multi-Game Typing Center - Logic
- * Manages game loops, physics engines for 4 typing games, dual-language visual keyboards,
- * QWERTY mappings, Web Audio API sound synthesizers, and scoring dashboards.
+ * Manages game loops, physics engines for 5 typing games (including 3D Space Warp),
+ * dual-language visual keyboards, QWERTY mappings, Web Audio API sound synthesizers, and scoring dashboards.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -93,13 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const retryBtn = document.getElementById('retryBtn');
     const gameTipBar = document.getElementById('gameTipBar');
     
-    // Spaceship & Racer tracks
+    // Space / Racer / HUD components
     const spaceship = document.getElementById('spaceship');
+    const spaceHud = document.getElementById('spaceHud');
     const synthwaveTrack = document.getElementById('synthwaveTrack');
     const racerPrompt = document.getElementById('racerPrompt');
     const raceCar = document.getElementById('raceCar');
     
-    // Sidebar & Header selectors
+    // Sidebar / Header selectors
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const fontFamilySelect = document.getElementById('fontFamilySelect');
@@ -188,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 osc.start(time);
                 osc.stop(time + 0.55);
             } else if (type === 'laser') {
-                // Laser blaster sweep
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.15);
@@ -198,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 osc.start(audioCtx.currentTime);
                 osc.stop(audioCtx.currentTime + 0.18);
             } else if (type === 'slash') {
-                // Ninja sweep blade sound (white noise style filter sweep)
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.1);
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- State Management ---
+    // --- Game State Variables ---
     let isGameRunning = false;
     let score = 0;
     let level = 1;
@@ -228,7 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameStartTime = 0;
     
     // Spawning items
-    let ghosts = []; // Acts as meteor / ninja array too
+    let ghosts = []; // Acts as meteor / ninja / 3d warp arrays
+    let stars = [];  // Starfield in 3D mode
     let particles = [];
     let lockedGhost = null; 
     let lastSpawnTime = 0;
@@ -238,13 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Racer specific state
     let racerText = "";
     let racerIndex = 0;
-    let racerTimeLimit = 60; // 60 seconds racer limit
-
-    // Physics constants
-    const gravity = 0.16; // ninja mode gravity drop
+    let racerTimeLimit = 60; 
 
     // Options
-    let activeGameMode = 'ghost'; // ghost, meteor, racer, ninja
+    let activeGameMode = 'ghost'; // ghost, meteor, racer, ninja, warp
     let activeLang = 'km'; // km, en
     let difficulty = 'easy'; // easy, medium, hard
     let currentTheme = 'light';
@@ -260,13 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadPreferences() {
-        const savedScores = localStorage.getItem('kgt_highscores_multi');
+        const savedScores = localStorage.getItem('kgt_highscores_multi_3d');
         if (savedScores) {
             highScores = JSON.parse(savedScores);
         } else {
-            // Migration support from old key
-            const oldScore = localStorage.getItem('kgt_highscore');
-            if (oldScore) highScores.km = parseInt(oldScore, 10);
+            const oldScores = localStorage.getItem('kgt_highscores_multi');
+            if (oldScores) highScores = JSON.parse(oldScores);
         }
         updateHighScoreDisplay();
 
@@ -303,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('kgt_font', currentFont);
         localStorage.setItem('kgt_sound', soundEnabled.toString());
         localStorage.setItem('kgt_lang', activeLang);
-        localStorage.setItem('kgt_highscores_multi', JSON.stringify(highScores));
+        localStorage.setItem('kgt_highscores_multi_3d', JSON.stringify(highScores));
     }
 
     function updateHighScoreDisplay() {
@@ -322,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         correctKeystrokes = 0;
         maxWpm = 0;
         ghosts = [];
+        stars = [];
         particles = [];
         lockedGhost = null;
         lastSpawnTime = Date.now();
@@ -329,8 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Hide standard components
         spaceship.style.display = 'none';
+        spaceHud.style.display = 'none';
         synthwaveTrack.style.display = 'none';
         livesDashItem.style.display = 'flex';
+        gameArena.classList.remove('mode-3d');
         
         // Settings based on difficulty
         const diffCoeff = difficulty === 'easy' ? 1.0 : difficulty === 'medium' ? 0.8 : 0.65;
@@ -341,6 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeGameMode === 'meteor') {
             spaceship.style.display = 'block';
             spaceship.style.left = '50%';
+        } else if (activeGameMode === 'warp') {
+            gameArena.classList.add('mode-3d');
+            spaceHud.style.display = 'flex';
+            spawnInterval = 3600 * diffCoeff;
+            baseSpeed = difficulty === 'easy' ? 3.2 : difficulty === 'medium' ? 4.5 : 6.0; // Z speed progression
+            
+            // Spawn initial background stars
+            for (let i = 0; i < 30; i++) {
+                spawnInitial3DStar();
+            }
         } else if (activeGameMode === 'racer') {
             synthwaveTrack.style.display = 'flex';
             livesDashItem.style.display = 'none'; // Racer uses timer instead of lives
@@ -357,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Clean UI
         updateDashboard();
-        gameArena.querySelectorAll('.ghost, .meteor, .ninja-word, .particle, .laser-beam, .ninja-slash').forEach(el => el.remove());
+        gameArena.querySelectorAll('.ghost, .meteor, .ninja-word, .space-word, .star-3d, .particle, .laser-beam, .laser-beam-3d, .ninja-slash').forEach(el => el.remove());
         activeWordBuffer.style.display = 'none';
         
         startScreen.classList.remove('active');
@@ -373,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isGameRunning) return;
 
         const currentTime = Date.now();
+        const arenaWidth = gameArena.clientWidth;
         const arenaHeight = gameArena.clientHeight;
         const speed = baseSpeed + (level * 0.08);
 
@@ -410,23 +420,24 @@ document.addEventListener('DOMContentLoaded', () => {
             statTimeText(remaining);
 
             if (remaining <= 0) {
-                // Time's up
                 triggerGameOver(false, "Time is up / អស់ពេលវេលា!");
             }
         }
         else if (activeGameMode === 'ninja') {
-            // C. Word Ninja Mode (Gravity Arcs)
+            // C. Keyboard Ninja Mode (Gravity Arcs)
             if (currentTime - lastSpawnTime > spawnInterval) {
                 spawnNinjaWord();
                 lastSpawnTime = currentTime;
                 spawnInterval = Math.max(1300, spawnInterval - 30);
             }
 
+            // Gravity scales directly based on difficulty selection for slower gameplay arcs
+            const activeGravity = difficulty === 'easy' ? 0.045 : difficulty === 'medium' ? 0.065 : 0.085;
+
             for (let i = ghosts.length - 1; i >= 0; i--) {
                 const item = ghosts[i];
                 
-                // Physics formulas (gravity drops velocity)
-                item.vy += gravity;
+                item.vy += activeGravity;
                 item.x += item.vx;
                 item.y += item.vy;
                 item.rotation += item.rotSpeed;
@@ -436,8 +447,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.element.style.transform = `rotate(${item.rotation}deg)`;
 
                 // Breaches (falls past bottom screen border)
-                // We check if it is falling downwards (vy > 0) and is past height
                 if (item.vy > 0 && item.y > arenaHeight + 40) {
+                    handleBreach(item);
+                    ghosts.splice(i, 1);
+                    continue;
+                }
+            }
+        }
+        else if (activeGameMode === 'warp') {
+            // D. 3D Space Warp Mode
+            if (currentTime - lastSpawnTime > spawnInterval) {
+                spawn3DWord();
+                lastSpawnTime = currentTime;
+                spawnInterval = Math.max(1500, spawnInterval - 40);
+            }
+
+            // Spawn background stars continuously
+            if (Math.random() < 0.15 && stars.length < 40) {
+                spawn3DStar();
+            }
+
+            // Update flying stars
+            const starSpeed = speed * 1.5;
+            for (let i = stars.length - 1; i >= 0; i--) {
+                const star = stars[i];
+                star.z += starSpeed;
+                
+                // Perspective project
+                const scale = 500 / (500 - star.z);
+                const screenX = arenaWidth / 2 + star.x * scale;
+                const screenY = arenaHeight / 2 + star.y * scale;
+
+                star.element.style.transform = `translate3d(${screenX}px, ${screenY}px, ${star.z}px)`;
+                
+                if (star.z >= 200) {
+                    star.element.remove();
+                    stars.splice(i, 1);
+                }
+            }
+
+            // Update flying space words
+            for (let i = ghosts.length - 1; i >= 0; i--) {
+                const item = ghosts[i];
+                item.z += speed; // increase depth
+                
+                // Trajectory spreads outwards
+                item.x += item.vx;
+                item.y += item.vy;
+
+                // Perspective project coordinates onto 3D container
+                const scale = 500 / (500 - item.z);
+                const projX = arenaWidth / 2 + item.x * scale;
+                const projY = arenaHeight / 2 + item.y * scale;
+
+                item.element.style.transform = `translate3d(${projX}px, ${projY}px, ${item.z}px) translate(-50%, -50%) scale(${scale})`;
+
+                // Danger highlight (depth z is close to screen cockpit z > 40px)
+                if (item.z > 40 && !item.element.classList.contains('danger')) {
+                    item.element.classList.add('danger');
+                }
+
+                // Breach check (flying past cockpit boundary z > 150px)
+                if (item.z >= 130) {
                     handleBreach(item);
                     ghosts.splice(i, 1);
                     continue;
@@ -455,13 +526,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function statTimeText(sec) {
-        statTimeDisplay = document.getElementById('statTimeText') || null;
-        if (!statTimeDisplay) {
-            // Add a dynamic time display on racer dashboard
-            const timeCardVal = document.getElementById('statTime') || null;
-            if (timeCardVal) {
-                timeCardVal.textContent = `${sec}s`;
-            }
+        const timeCardVal = document.getElementById('statTime');
+        if (timeCardVal) {
+            timeCardVal.textContent = `${sec}s`;
         }
     }
 
@@ -469,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function spawnGhostOrMeteor() {
         const words = wordDatabase[activeLang][difficulty];
         const randomWord = words[Math.floor(Math.random() * words.length)];
-        const xPos = Math.random() * 65 + 18; // 18% to 83% width offset
+        const xPos = Math.random() * 65 + 18; 
         
         const el = document.createElement('div');
         el.className = activeGameMode === 'ghost' ? 'ghost' : 'meteor';
@@ -478,7 +545,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const elId = 'e_' + Math.random().toString(36).substr(2, 5);
         el.id = elId;
 
-        // Keep word as a single unified text block to prevent character breaking in Khmer
         if (activeGameMode === 'ghost') {
             el.innerHTML = `
                 <div class="ghost-icon">👻</div>
@@ -512,12 +578,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const startX = Math.random() * (arenaWidth - 160) + 80;
         const startY = arenaHeight + 10;
         
-        // Physics velocities
-        // Shoots upwards: vy must be negative (-6 to -10 depending on height)
-        const vy = -6.5 - Math.random() * 2.5;
-        // Moves left/right slightly towards center
+        // Vertical launch speed calibrated directly by difficulty
+        const vy = difficulty === 'easy' ? (-4.0 - Math.random() * 0.8) :
+                   difficulty === 'medium' ? (-5.2 - Math.random() * 1.2) :
+                   (-6.5 - Math.random() * 1.8);
+                   
         const centerOffset = (arenaWidth / 2 - startX) / (arenaWidth / 2);
-        const vx = centerOffset * (1.2 + Math.random() * 1.5);
+        const vx = centerOffset * (0.8 + Math.random() * 1.2);
         
         const el = document.createElement('div');
         el.className = 'ninja-word';
@@ -526,7 +593,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const elId = 'n_' + Math.random().toString(36).substr(2, 5);
         el.id = elId;
 
-        // Keep word as a single unified text block to prevent character breaking in Khmer
         el.innerHTML = `<div class="ghost-word">${randomWord}</div>`;
         gameArena.appendChild(el);
 
@@ -537,20 +603,100 @@ document.addEventListener('DOMContentLoaded', () => {
             y: startY,
             vx: vx,
             vy: vy,
-            rotation: Math.random() * 45 - 22,
-            rotSpeed: Math.random() * 2 - 1, // rotation delta per frame
+            rotation: Math.random() * 40 - 20,
+            rotSpeed: Math.random() * 1.5 - 0.75, 
             typedLength: 0,
             element: el
         });
     }
 
-    // Racer Prompt Renderer - renders paragraphs split into at most 3 blocks to preserve Khmer rendering integrity
+    function spawn3DWord() {
+        const words = wordDatabase[activeLang][difficulty];
+        const randomWord = words[Math.floor(Math.random() * words.length)];
+        
+        const el = document.createElement('div');
+        el.className = 'space-word';
+        
+        // Spawn far away in center grid
+        el.style.left = `50%`;
+        el.style.top = `50%`;
+        
+        const elId = 'w_' + Math.random().toString(36).substr(2, 5);
+        el.id = elId;
+        el.innerHTML = randomWord;
+        gameArena.appendChild(el);
+
+        // Trajectory angle spreads outward from center
+        const angle = Math.random() * Math.PI * 2;
+        const spreadSpeed = 0.5 + Math.random() * 1.2;
+        
+        ghosts.push({
+            id: elId,
+            word: randomWord,
+            x: 0, // center offset x
+            y: 0, // center offset y
+            z: -1200, // Z depth starts far away
+            vx: Math.cos(angle) * spreadSpeed,
+            vy: Math.sin(angle) * spreadSpeed,
+            typedLength: 0,
+            element: el
+        });
+    }
+
+    function spawn3DStar() {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 20 + Math.random() * 180;
+        
+        const starEl = document.createElement('div');
+        starEl.className = 'star-3d';
+        
+        const size = Math.random() * 2.5 + 0.5;
+        starEl.style.width = `${size}px`;
+        starEl.style.height = `${size}px`;
+        
+        gameArena.appendChild(starEl);
+
+        stars.push({
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+            z: -1200,
+            element: starEl
+        });
+    }
+
+    function spawnInitial3DStar() {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 20 + Math.random() * 180;
+        const startZ = Math.random() * -1200; // randomized Z depth
+        
+        const starEl = document.createElement('div');
+        starEl.className = 'star-3d';
+        const size = Math.random() * 2.5 + 0.5;
+        starEl.style.width = `${size}px`;
+        starEl.style.height = `${size}px`;
+        gameArena.appendChild(starEl);
+
+        const arenaWidth = gameArena.clientWidth;
+        const arenaHeight = gameArena.clientHeight;
+        const scale = 500 / (500 - startZ);
+        const screenX = arenaWidth / 2 + Math.cos(angle) * distance * scale;
+        const screenY = arenaHeight / 2 + Math.sin(angle) * distance * scale;
+        starEl.style.transform = `translate3d(${screenX}px, ${screenY}px, ${startZ}px)`;
+
+        stars.push({
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+            z: startZ,
+            element: starEl
+        });
+    }
+
+    // Racer Prompt Renderer
     function renderRacerPrompt() {
         const typed = racerText.substring(0, racerIndex);
         const active = racerText.substring(racerIndex, racerIndex + 1);
         const remaining = racerText.substring(racerIndex + 1);
 
-        // Format spaces for spans
         const typedFormatted = typed.replace(/ /g, '&nbsp;');
         const activeFormatted = active === ' ' ? '&nbsp;' : active;
         const remainingFormatted = remaining.replace(/ /g, '&nbsp;');
@@ -578,41 +724,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         totalKeystrokes++;
-
-        // 1. Resolve key input based on Language settings
+        
         let typedChar = e.key;
         if (activeLang === 'km') {
-            // Translate QWERTY code to Khmer
             const mapped = keyMap[e.code];
             if (mapped) {
                 typedChar = e.shiftKey ? mapped.shift : mapped.normal;
             }
         }
 
-        // 2. Dispatch Game Mode matching
         if (activeGameMode === 'racer') {
-            // racer mode uses direct linear typing
             const targetChar = racerText[racerIndex];
 
-            // Match evaluation
             if (e.key === targetChar || typedChar === targetChar) {
                 correctKeystrokes++;
                 playSound('click');
-                
-                // Scrolling road grid animation visual hook
                 synthwaveTrack.classList.add('active-scroll');
                 
                 racerIndex++;
                 
-                // Move car progress
                 const progress = racerIndex / racerText.length;
-                const carLeft = 8 + progress * 74; // range from 8% to 82%
+                const carLeft = 8 + progress * 74; 
                 raceCar.style.left = `${carLeft}%`;
 
                 renderRacerPrompt();
 
                 if (racerIndex >= racerText.length) {
-                    // Completed Racer track!
                     handleRacerWin();
                 }
             } else {
@@ -620,30 +757,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 combo = 1;
                 synthwaveTrack.classList.remove('active-scroll');
                 
-                // Temporary shake animation on mistake
                 racerPrompt.classList.add('shake-incorrect');
                 setTimeout(() => racerPrompt.classList.remove('shake-incorrect'), 200);
             }
         } 
         else {
-            // Ghost, Meteor, Ninja matching logic (with Lock-on)
             if (lockedGhost) {
                 const targetChar = lockedGhost.word[lockedGhost.typedLength];
                 
                 if (e.key === targetChar || typedChar === targetChar) {
-                    // Match correct
                     correctKeystrokes++;
                     playSound('click');
                     lockedGhost.typedLength++;
                     
                     updateActiveWordBuffer();
 
-                    // Check victory
                     if (lockedGhost.typedLength === lockedGhost.word.length) {
                         defeatActiveGhost(lockedGhost);
                     }
                 } else {
-                    // Typo
                     playSound('error');
                     combo = 1;
                     gameCombo.textContent = `x${combo}`;
@@ -656,25 +788,32 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Find matching start letter
                 let matchedItem = null;
-                
+                let highestValue = -1200; // Prioritize closest (highest y or highest z depth)
+
                 if (activeGameMode === 'ghost' || activeGameMode === 'meteor') {
-                    // Prioritize items closest to bottom (highest Y)
-                    let highestY = -1;
                     for (const item of ghosts) {
                         const first = item.word[0];
-                        if ((e.key === first || typedChar === first) && item.y > highestY) {
+                        if ((e.key === first || typedChar === first) && item.y > highestValue) {
                             matchedItem = item;
-                            highestY = item.y;
+                            highestValue = item.y;
                         }
                     }
                 } else if (activeGameMode === 'ninja') {
-                    // Prioritize highest Y coordinates (which is lowest on screen, closest to breach)
-                    let highestY = -1;
                     for (const item of ghosts) {
                         const first = item.word[0];
-                        if ((e.key === first || typedChar === first) && item.y > highestY) {
+                        if ((e.key === first || typedChar === first) && item.y > highestValue) {
                             matchedItem = item;
-                            highestY = item.y;
+                            highestValue = item.y;
+                        }
+                    }
+                } else if (activeGameMode === 'warp') {
+                    // Warp mode: prioritize items closest in depth Z
+                    highestValue = -1500;
+                    for (const item of ghosts) {
+                        const first = item.word[0];
+                        if ((e.key === first || typedChar === first) && item.z > highestValue) {
+                            matchedItem = item;
+                            highestValue = item.z;
                         }
                     }
                 }
@@ -687,9 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     lockedGhost.element.classList.add('locked');
 
-                    // Space ship visual slide triggers
                     if (activeGameMode === 'meteor') {
-                        // Slide spaceship left center offset
                         alignSpaceshipWithTarget();
                     }
 
@@ -707,8 +844,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function alignSpaceshipWithTarget() {
         if (!lockedGhost) return;
-        
-        // Move spaceship element horizontally
         spaceship.style.left = `${lockedGhost.x}%`;
     }
 
@@ -718,9 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const xPos = rect.left - arenaRect.left + rect.width / 2;
         const yPos = rect.top - arenaRect.top + rect.height / 2;
 
-        // Custom action highlights
         if (activeGameMode === 'meteor') {
-            // 1. Space Invaders laser beam shoot
             playSound('laser');
             drawLaserBeam(xPos);
             
@@ -731,7 +864,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 80);
         } 
         else if (activeGameMode === 'ninja') {
-            // 2. Ninja sword blade sweep slash
             playSound('slash');
             drawSwordSlash(xPos, yPos, ghost.rotation);
             
@@ -741,29 +873,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 ghost.element.remove();
             }, 60);
         } 
+        else if (activeGameMode === 'warp') {
+            // 3D Space Warp cockpit laser fire converging
+            playSound('laser');
+            drawCockpit3DLasers(xPos, yPos);
+            
+            setTimeout(() => {
+                playSound('blast');
+                createExplosionParticles(xPos, yPos);
+                ghost.element.remove();
+            }, 100);
+        }
         else {
-            // 3. Ghost standard blast
             playSound('blast');
             createExplosionParticles(xPos, yPos);
             ghost.element.remove();
         }
 
-        // Remove from database
         ghosts = ghosts.filter(g => g.id !== ghost.id);
 
-        // Scoring
         const baseScore = ghost.word.length * 10;
         score += baseScore * combo;
-        
-        // Combos
         combo = Math.min(10, combo + 1);
 
-        // Level progressions
         const nextLevel = Math.floor(score / 800) + 1;
         if (nextLevel > level) {
             level = nextLevel;
             playSound('levelUp');
-            showToast(`Level Up! Speed Mode: Level ${level}`);
+            showToast(`Level Up! Current Speed: Level ${level}`);
         }
 
         unlockTarget();
@@ -772,21 +909,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawLaserBeam(targetX) {
         const laser = document.createElement('div');
         laser.className = 'laser-beam';
-        
-        // Spaceship center coordinates
         const shipRect = spaceship.getBoundingClientRect();
         const arenaRect = gameArena.getBoundingClientRect();
-        
         const startX = shipRect.left - arenaRect.left + shipRect.width / 2;
         const startY = shipRect.top - arenaRect.top;
         
         laser.style.left = `${startX - 1}px`;
         laser.style.top = `0px`;
         laser.style.height = `${startY}px`;
-        
-        // Make laser align with target X
         laser.style.transform = `skewX(${((targetX - startX) / startY) * 30}deg)`;
-
         gameArena.appendChild(laser);
         
         setTimeout(() => laser.remove(), 180);
@@ -799,10 +930,42 @@ document.addEventListener('DOMContentLoaded', () => {
         slash.style.top = `${y}px`;
         slash.style.width = `120px`;
         slash.style.transform = `rotate(${angle + 35}deg)`;
-
         gameArena.appendChild(slash);
         
         setTimeout(() => slash.remove(), 250);
+    }
+
+    function drawCockpit3DLasers(targetX, targetY) {
+        const arenaWidth = gameArena.clientWidth;
+        const arenaHeight = gameArena.clientHeight;
+
+        // Laser 1: bottom-left
+        const laserL = document.createElement('div');
+        laserL.className = 'laser-beam-3d';
+        laserL.style.left = `0px`;
+        laserL.style.top = `${arenaHeight}px`;
+        const distL = Math.hypot(targetX, arenaHeight - targetY);
+        laserL.style.width = `${distL}px`;
+        const angleL = Math.atan2(targetY - arenaHeight, targetX) * (180 / Math.PI);
+        laserL.style.transform = `rotate(${angleL}deg)`;
+
+        // Laser 2: bottom-right
+        const laserR = document.createElement('div');
+        laserR.className = 'laser-beam-3d';
+        laserR.style.left = `${arenaWidth}px`;
+        laserR.style.top = `${arenaHeight}px`;
+        const distR = Math.hypot(arenaWidth - targetX, arenaHeight - targetY);
+        laserR.style.width = `${distR}px`;
+        const angleR = Math.atan2(targetY - arenaHeight, targetX - arenaWidth) * (180 / Math.PI);
+        laserR.style.transform = `rotate(${angleR}deg)`;
+
+        gameArena.appendChild(laserL);
+        gameArena.appendChild(laserR);
+
+        setTimeout(() => {
+            laserL.remove();
+            laserR.remove();
+        }, 220);
     }
 
     function unlockTarget() {
@@ -818,7 +981,6 @@ document.addEventListener('DOMContentLoaded', () => {
         lives--;
         combo = 1;
 
-        // Screen shake
         gameArena.parentElement.classList.add('shake-arena');
         setTimeout(() => {
             gameArena.parentElement.classList.remove('shake-arena');
@@ -843,7 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound('levelUp');
         synthwaveTrack.classList.remove('active-scroll');
         
-        // Bonus WPM score
         const durationSecs = (Date.now() - gameStartTime) / 1000;
         const wpmCalc = Math.round((correctKeystrokes / 5) / (durationSecs / 60));
         score += wpmCalc * 15;
@@ -856,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unlockTarget();
         synthwaveTrack.classList.remove('active-scroll');
 
-        // High Score
+        // High Score check
         if (score > highScores[activeLang]) {
             highScores[activeLang] = score;
             savePreferences();
@@ -864,7 +1025,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('New Personal High Score! 🎉');
         }
 
-        // Stats summary calculation
         const durationSecs = (Date.now() - gameStartTime) / 1000;
         const finalWpmCalc = durationSecs > 0 ? Math.round((correctKeystrokes / 5) / (durationSecs / 60)) : 0;
         const accuracyCalc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
@@ -891,7 +1051,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLevel.textContent = `Level ${level}`;
         gameCombo.textContent = `x${combo}`;
 
-        // Sidebar WPM / Accuracy
         const durationSecs = (Date.now() - gameStartTime) / 1000;
         const wpmCalc = durationSecs > 0 ? Math.round((correctKeystrokes / 5) / (durationSecs / 60)) : 0;
         statWpm.textContent = `${wpmCalc} WPM`;
@@ -899,7 +1058,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const accuracy = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
         statAccuracy.textContent = `${accuracy}%`;
 
-        // Lives updates
         livesContainer.innerHTML = "";
         for (let i = 0; i < 3; i++) {
             const heart = document.createElement('span');
@@ -922,7 +1080,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- On-Screen Virtual Keyboard Guides ---
     function highlightVisualKeyboardKeys() {
-        // Clear all prompts
         document.querySelectorAll('.key.prompt, .key.prompt-shift').forEach(el => {
             el.classList.remove('prompt', 'prompt-shift');
         });
@@ -932,30 +1089,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let charactersToHighlight = [];
 
         if (activeGameMode === 'racer') {
-            // Linear typing: highlight the next character in the paragraph
             if (racerIndex < racerText.length) {
                 charactersToHighlight.push(racerText[racerIndex]);
             }
         } 
         else {
             if (lockedGhost) {
-                // Lock on: highlight next character of active word
                 charactersToHighlight.push(lockedGhost.word[lockedGhost.typedLength]);
             } else {
-                // Not locked: highlight starting characters of all floating items
                 ghosts.forEach(ghost => {
                     if (ghost.word) charactersToHighlight.push(ghost.word[0]);
                 });
             }
         }
 
-        // Highlight visual keys matching resolved targets
         charactersToHighlight.forEach(nextChar => {
             let targetCode = null;
             let isShiftRequired = false;
 
             if (activeLang === 'km') {
-                // Search translation keyMap
                 for (const [code, mapping] of Object.entries(keyMap)) {
                     if (mapping.normal === nextChar) {
                         targetCode = code;
@@ -967,12 +1119,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } else {
-                // English mode: Match key directly using QWERTY character mappings
                 const charLower = nextChar.toLowerCase();
                 for (const [code, mapping] of Object.entries(keyMap)) {
                     if (code.startsWith('Key') && code.charAt(3).toLowerCase() === charLower) {
                         targetCode = code;
-                        // Determine shift requirements based on case
                         if (nextChar !== charLower) {
                             isShiftRequired = true;
                         }
@@ -986,7 +1136,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 
-                // Handle Spacebar
                 if (nextChar === ' ') {
                     targetCode = "Space";
                 }
@@ -1008,12 +1157,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Particle Explosions ---
     function createExplosionParticles(x, y) {
-        // Match theme accent colors
         const colors = activeGameMode === 'meteor' 
-            ? ['#f59e0b', '#ef4444', '#f87171', '#fb7185', '#ffffff'] // Space meteor fire
+            ? ['#f59e0b', '#ef4444', '#f87171', '#fb7185', '#ffffff'] 
             : activeGameMode === 'ninja'
-            ? ['#06b6d4', '#0891b2', '#0ea5e9', '#ffffff'] // Blade sparks
-            : ['#6366f1', '#818cf8', '#10b981', '#34d399', '#ffffff']; // Ghost magic dust
+            ? ['#06b6d4', '#0891b2', '#0ea5e9', '#ffffff'] 
+            : activeGameMode === 'warp'
+            ? ['#a855f7', '#d8b4fe', '#c084fc', '#06b6d4', '#ffffff'] // Space void colors
+            : ['#6366f1', '#818cf8', '#10b981', '#34d399', '#ffffff']; 
             
         const count = 18;
 
@@ -1065,8 +1215,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mode overlays details updates ---
     function updateModeOverlayDetails() {
-        const visualKeyboard = document.getElementById('visualKeyboard');
-        
         if (activeGameMode === 'ghost') {
             modeOverlayIcon.textContent = "👻";
             modeOverlayTitle.textContent = "Ghost Typing / កម្ចាត់ខ្មោច";
@@ -1087,9 +1235,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if (activeGameMode === 'ninja') {
             modeOverlayIcon.textContent = "⚔️";
-            modeOverlayTitle.textContent = "Word Ninja / អ្នកកាប់អក្សរ";
-            modeOverlayDesc.textContent = "Toss words in gravity arcs and slice them in half like a true Word Ninja!";
-            gameTipBar.textContent = "Slice targets in mid-air. Don't let them fall back down the screen!";
+            modeOverlayTitle.textContent = "Keyboard Ninja / អ្នកកាប់អក្សរ";
+            modeOverlayDesc.textContent = "Toss words in slow gravity arcs and slice them in half like a Keyboard Ninja!";
+            gameTipBar.textContent = "Slice targets in mid-air. Calibrated speeds make typing easier.";
+        }
+        else if (activeGameMode === 'warp') {
+            modeOverlayIcon.textContent = "🌌";
+            modeOverlayTitle.textContent = "3D Space Warp / សកលលោក 3D";
+            modeOverlayDesc.textContent = "Warp through 3D space fields! Target and blast words zooming towards your viewport!";
+            gameTipBar.textContent = "3D cockpit laser line convergence triggers on target blast.";
         }
     }
 
@@ -1099,8 +1253,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeLang === 'km') {
             visualKeyboard.classList.remove('lang-en');
             visualKeyboard.classList.add('lang-km');
-            
-            // Adjust options labels in selects
             fontFamilySelect.style.display = 'block';
         } else {
             visualKeyboard.classList.remove('lang-km');
@@ -1125,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateLanguageMode();
                 updateModeOverlayDetails();
                 savePreferences();
-                showToast(`Language switched to ${activeLang === 'km' ? 'Khmer' : 'English'}`, 'info');
+                showToast(`Language: ${activeLang === 'km' ? 'Khmer' : 'English'}`, 'info');
                 
                 if (isGameRunning) triggerGameOver(false);
             });
@@ -1142,7 +1294,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (isGameRunning) triggerGameOver(false);
                 
-                // Set menus visible
                 startScreen.classList.add('active');
                 gameOverScreen.classList.remove('active');
             });
@@ -1275,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.classList.add('toast-out');
             setTimeout(() => {
                 toast.remove();
-            }, 300); // 300ms transition time buffer
+            }, 300);
         }, 2000);
     }
 
