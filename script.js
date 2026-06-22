@@ -478,20 +478,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const elId = 'e_' + Math.random().toString(36).substr(2, 5);
         el.id = elId;
 
-        let wordHtml = "";
-        for (let i = 0; i < randomWord.length; i++) {
-            wordHtml += `<span class="char-remaining">${randomWord[i]}</span>`;
-        }
-
+        // Keep word as a single unified text block to prevent character breaking in Khmer
         if (activeGameMode === 'ghost') {
             el.innerHTML = `
                 <div class="ghost-icon">👻</div>
-                <div class="ghost-word">${wordHtml}</div>
+                <div class="ghost-word">${randomWord}</div>
             `;
         } else {
             el.innerHTML = `
                 <div class="meteor-icon">☄️</div>
-                <div class="meteor-word">${wordHtml}</div>
+                <div class="meteor-word">${randomWord}</div>
             `;
         }
 
@@ -530,11 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const elId = 'n_' + Math.random().toString(36).substr(2, 5);
         el.id = elId;
 
-        let wordHtml = "";
-        for (let i = 0; i < randomWord.length; i++) {
-            wordHtml += `<span class="char-remaining">${randomWord[i]}</span>`;
-        }
-        el.innerHTML = wordHtml;
+        // Keep word as a single unified text block to prevent character breaking in Khmer
+        el.innerHTML = `<div class="ghost-word">${randomWord}</div>`;
         gameArena.appendChild(el);
 
         ghosts.push({
@@ -551,23 +544,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Racer Prompt Renderer
+    // Racer Prompt Renderer - renders paragraphs split into at most 3 blocks to preserve Khmer rendering integrity
     function renderRacerPrompt() {
-        racerPrompt.innerHTML = "";
-        for (let i = 0; i < racerText.length; i++) {
-            const span = document.createElement('span');
-            span.className = 'char-remaining';
-            if (racerText[i] === ' ') {
-                span.innerHTML = '&nbsp;';
-                span.classList.add('char-space');
-            } else {
-                span.textContent = racerText[i];
-            }
-            if (i === 0) {
-                span.className = 'char-active';
-            }
-            racerPrompt.appendChild(span);
-        }
+        const typed = racerText.substring(0, racerIndex);
+        const active = racerText.substring(racerIndex, racerIndex + 1);
+        const remaining = racerText.substring(racerIndex + 1);
+
+        // Format spaces for spans
+        const typedFormatted = typed.replace(/ /g, '&nbsp;');
+        const activeFormatted = active === ' ' ? '&nbsp;' : active;
+        const remainingFormatted = remaining.replace(/ /g, '&nbsp;');
+
+        racerPrompt.innerHTML = `
+            <span class="char-typed">${typedFormatted}</span><span class="char-active">${activeFormatted}</span><span class="char-remaining">${remainingFormatted}</span>
+        `;
     }
 
     // --- Typing Evaluator ---
@@ -603,14 +593,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeGameMode === 'racer') {
             // racer mode uses direct linear typing
             const targetChar = racerText[racerIndex];
-            const charSpans = racerPrompt.querySelectorAll('span');
-            const activeSpan = charSpans[racerIndex];
 
             // Match evaluation
             if (e.key === targetChar || typedChar === targetChar) {
                 correctKeystrokes++;
                 playSound('click');
-                activeSpan.className = 'char-typed';
                 
                 // Scrolling road grid animation visual hook
                 synthwaveTrack.classList.add('active-scroll');
@@ -622,17 +609,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const carLeft = 8 + progress * 74; // range from 8% to 82%
                 raceCar.style.left = `${carLeft}%`;
 
-                if (racerIndex < racerText.length) {
-                    charSpans[racerIndex].className = 'char-active';
-                } else {
+                renderRacerPrompt();
+
+                if (racerIndex >= racerText.length) {
                     // Completed Racer track!
                     handleRacerWin();
                 }
             } else {
                 playSound('error');
-                activeSpan.className = 'char-incorrect';
                 combo = 1;
                 synthwaveTrack.classList.remove('active-scroll');
+                
+                // Temporary shake animation on mistake
+                racerPrompt.classList.add('shake-incorrect');
+                setTimeout(() => racerPrompt.classList.remove('shake-incorrect'), 200);
             }
         } 
         else {
@@ -645,10 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     correctKeystrokes++;
                     playSound('click');
                     lockedGhost.typedLength++;
-
-                    // Highlight letter
-                    const spans = lockedGhost.element.querySelectorAll('span');
-                    spans[lockedGhost.typedLength - 1].className = 'char-correct';
                     
                     updateActiveWordBuffer();
 
@@ -682,7 +668,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else if (activeGameMode === 'ninja') {
-                    // Ninja mode: select items closest to apex/top or lowest depending on choice.
                     // Prioritize highest Y coordinates (which is lowest on screen, closest to breach)
                     let highestY = -1;
                     for (const item of ghosts) {
@@ -701,8 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     lockedGhost.typedLength = 1;
 
                     lockedGhost.element.classList.add('locked');
-                    const spans = lockedGhost.element.querySelectorAll('span');
-                    spans[0].className = 'char-correct';
 
                     // Space ship visual slide triggers
                     if (activeGameMode === 'meteor') {
@@ -1287,10 +1270,13 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.innerHTML = `${iconHtml} <span>${message}</span>`;
         toastContainer.appendChild(toast);
 
+        // Auto hide after showing for exactly 2 seconds
         setTimeout(() => {
             toast.classList.add('toast-out');
-            toast.addEventListener('transitionend', () => toast.remove());
-        }, 2500);
+            setTimeout(() => {
+                toast.remove();
+            }, 300); // 300ms transition time buffer
+        }, 2000);
     }
 
     // Start Engine
