@@ -1,0 +1,42 @@
+{
+  "name": "khmer-typing-pad",
+  "version": "1.0.0",
+  "description": "Khmer & English Multi-Game Typing Center",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "khmer",
+    "typing",
+    "game",
+    "electron"
+  ],
+  "author": "Bonrath",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.bonrath.khmertyping",
+    "productName": "KhmerTypingGameCenter",
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "script.js",
+      "main.js"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
