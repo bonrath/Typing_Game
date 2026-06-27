@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khmer & English Typing Master</title>
+  
+  <!-- Style sheets -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Background blur blobs for Glassmorphism UI -->
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Primary Application Wrapper -->
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header" style="display: none;">
+      <div class="brand-section">
+        <span class="logo-icon">⌨️</span>
+        <h1 class="brand-name">Typing Master</h1>
+      </div>
+      
+      <!-- Center Navigation Links -->
+      <nav class="nav-section">
+        <button class="nav-btn" data-view="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-view="lessons">📖 Lessons</button>
+        <button class="nav-btn" data-view="minigames">🎮 Mini-Games</button>
+        <button class="nav-btn" data-view="leaderboard">🏆 Leaderboard</button>
+        <button class="nav-btn" data-view="reports">📈 Reports</button>
+        <button class="nav-btn" data-view="teacher">👨‍🏫 Teacher</button>
+        <button class="nav-btn" data-view="settings">⚙️ Settings</button>
+      </nav>
+
+      <!-- Right Action Items -->
+      <div class="header-actions">
+        <div class="profile-badge" id="header-profile-badge">
+          <div class="badge-avatar" id="header-badge-avatar">B</div>
+          <span class="badge-name" id="header-badge-name">Bonrath</span>
+          <span style="font-size: 10px; color: var(--text-muted);">▼</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main View Content Area -->
+    <main class="app-content">
+
+      <!-- Hidden focus receiver input for typing compositions -->
+      <input type="text" id="typing-raw-input" autocomplete="off" autofocus>
+
+      <!-- VIEW 1: Profiles Selection (Start View) -->
+      <section id="view-profiles-selection" class="view-panel">
+        <div class="profile-selection-container">
+          <h2 class="profile-title">Khmer & English Typing Master</h2>
+          <p class="profile-subtitle">Select your profile to begin training or create a new student account.</p>
+          
+          <div class="profiles-list" id="profiles-scroller">
+            <!-- Dynamic profiles list goes here -->
+            
+            <!-- Create profile button trigger card -->
+            <div class="profile-card new-profile-card" id="add-profile-card">
+              <span class="new-icon">+</span>
+              <span class="profile-card-name">Add Student</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Dashboard -->
+      <section id="view-dashboard" class="view-panel">
+        <div class="dashboard-grid">
+          
+          <!-- Welcome card -->
+          <div class="grid-card col-span-2" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);">
+            <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 4px;">Welcome back, <span id="dash-welcome-name">Student</span>!</h2>
+            <p style="color: var(--text-muted); font-size: 13px;" id="dash-welcome-role">Student Progress Dashboard</p>
+          </div>
+
+          <!-- Quick statistics row -->
+          <div class="grid-card col-span-2">
+            <div class="card-header-small">
+              <span class="card-title-small">⚡ Overall Progress Overview</span>
+            </div>
+            <div class="quick-stats-row">
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Exercises Taken</span>
+                <div class="quick-stat-val" id="dash-total-games">0</div>
+                <div class="stat-glow" style="background:#6366f1;"></div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Best Speed</span>
+                <div class="quick-stat-val" id="dash-best-wpm">0 WPM</div>
+                <div class="stat-glow" style="background:#06b6d4;"></div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Average Accuracy</span>
+                <div class="quick-stat-val" id="dash-accuracy">0%</div>
+                <div class="stat-glow" style="background:#10b981;"></div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Practice Time</span>
+                <div class="quick-stat-val" id="dash-hours">0.0 hrs</div>
+                <div class="stat-glow" style="background:#f59e0b;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily challenge card -->
+          <div class="grid-card">
+            <div class="card-header-small">
+              <span class="card-title-small">📅 Daily Challenge</span>
+            </div>
+            <div class="challenge-text-area">
+              <span class="challenge-badge">XP BONUS</span>
+              <div class="challenge-title" id="dash-challenge-title">Loading Daily Challenge...</div>
+              <p class="challenge-desc" id="dash-challenge-desc">Complete today's challenge to receive a progress bonus.</p>
+            </div>
+            <button class="btn btn-primary" id="dash-challenge-btn-play" style="width: 100%; margin-top: auto; padding: 12px;">Start Challenge</button>
+          </div>
+
+          <!-- Recent sessions history -->
+          <div class="grid-card col-span-2">
+            <div class="card-header-small">
+              <span class="card-title-small">🕒 Recent Scores</span>
+            </div>
+            <div class="history-list" id="dash-recent-history-list">
+              <!-- Score items dynamically filled here -->
+            </div>
+          </div>
+
+          <!-- Achievements card -->
+          <div class="grid-card">
+            <div class="card-header-small">
+              <span class="card-title-small">🏆 Recent Achievements</span>
+            </div>
+            <div class="history-list" id="dash-achievements-list" style="gap: 12px;">
+              <!-- Mini achievement list cards -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 3: Lessons map tree -->
+      <section id="view-lessons" class="view-panel">
+        <div class="lessons-header-bar">
+          <div>
+            <h2 style="font-weight: 700;">Typing Master Curriculum</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Unlock levels sequentially by scoring at least 80% accuracy.</p>
+          </div>
+          <!-- Language Tabs -->
+          <div class="lang-selector-tabs">
+            <div class="lang-tab active" data-lang="en">🇬🇧 English</div>
+            <div class="lang-tab" data-lang="kh">🇰🇭 Khmer</div>
+          </div>
+        </div>
+
+        <div class="lessons-tree" id="lessons-map-scroller">
+          <!-- Lesson Nodes list rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- VIEW 4: Gameplay Screen -->
+      <section id="view-gameplay" class="view-panel">
+        <div class="gameplay-layout">
+          
+          <!-- Top Stats Bar -->
+          <div class="gameplay-stats-bar">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <h3 id="game-title" style="font-weight: 700; font-size: 16px;">English Home Row Lesson</h3>
+              <span id="game-mode-pill" class="game-stat-value practice-mode" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; display: inline-block;">PRACTICE</span>
+            </div>
+
+            <!-- Stats parameters -->
+            <div style="display: flex; gap: 40px;">
+              <div class="game-stat-item">
+                <span class="game-stat-label">WPM</span>
+                <span class="game-stat-value" id="game-wpm">0</span>
+              </div>
+              <div class="game-stat-item">
+                <span class="game-stat-label">Accuracy</span>
+                <span class="game-stat-value" id="game-accuracy">100%</span>
+              </div>
+              <div class="game-stat-item">
+                <span class="game-stat-label">Time Remaining</span>
+                <span class="game-stat-value" id="game-time">0s</span>
+              </div>
+              <button class="btn btn-secondary" id="game-exit-btn" style="padding:6px 12px; font-size:11px; align-self:center;">Exit</button>
+            </div>
+          </div>
+
+          <!-- Typing Text Field Area -->
+          <div class="typing-box-container">
+            <span class="typing-guide-text">Click screen or start typing directly...</span>
+            <div class="typing-text-display" id="typing-text-display">
+              <!-- Characters rendered here dynamically -->
+            </div>
+          </div>
+
+          <!-- Virtual Keyboard Display -->
+          <div class="keyboard-section" id="virtual-keyboard">
+            <!-- Render rows dynamically -->
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 5: Mini Games View -->
+      <section id="view-minigames" class="view-panel">
+        <div style="margin-bottom:20px;">
+          <h2 style="font-weight: 700;">Typing Arcade</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Play fun mini-games to build visual typing muscle memory.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:300px 1fr; gap:20px; height:calc(100% - 70px);">
+          <!-- Controls Panel -->
+          <div class="grid-card">
+            <span class="form-label" style="margin-bottom:12px;">1. Select Game Mode</span>
+            
+            <div class="games-tab-bar" style="flex-direction:column; gap:8px; width:100%; margin-bottom:12px;">
+              <div class="game-card-select active" data-game="falling">
+                <span class="game-card-icon">☄️</span>
+                <span class="game-card-title">Falling Words</span>
+              </div>
+              <div class="game-card-select" data-game="zombie">
+                <span class="game-card-icon">🧟</span>
+                <span class="game-card-title">Zombie Shooter</span>
+              </div>
+              <div class="game-card-select" data-game="race">
+                <span class="game-card-icon">🏎️</span>
+                <span class="game-card-title">Typing Race</span>
+              </div>
+              <div class="game-card-select" data-game="memory">
+                <span class="game-card-icon">🧠</span>
+                <span class="game-card-title">Memory Challenge</span>
+              </div>
+            </div>
+
+            <!-- Parameters options -->
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Keyboard Language</label>
+              <select class="form-input" id="game-lang-select" style="background:rgba(0,0,0,0.15);">
+                <option value="en">English (QWERTY)</option>
+                <option value="kh">Khmer (Unicode)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Difficulty Level</label>
+              <select class="form-input" id="game-diff-select" style="background:rgba(0,0,0,0.15);">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary" id="game-start-btn" style="width:100%; padding:12px; font-size:14px; margin-top:auto;">Start Game</button>
+            <button class="btn btn-secondary" id="game-restart-btn" style="width:100%; padding:10px; font-size:12px; margin-top:8px; display:none;">Restart</button>
+          </div>
+
+          <!-- Canvas Display Arena -->
+          <div class="gameplay-canvas-container" id="game-canvas-container">
+            <!-- Starting Game HUD overlay screen -->
+            <div class="game-overlay-screen">
+              <span class="game-overlay-title">Typing Arcade Ready</span>
+              <p class="game-overlay-desc">Pick a mini-game on the left and select your typing language to start. Practice makes perfect!</p>
+            </div>
+            
+            <canvas class="game-canvas" id="game-canvas"></canvas>
+            <!-- Typing Race HTML Overlay -->
+            <div id="game-race-text-container" class="game-race-text-display" style="display: none;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: Leaderboard -->
+      <section id="view-leaderboard" class="view-panel">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-weight: 700;">Local Hall of Fame</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Top typing scores achieved across all local user accounts.</p>
+        </div>
+
+        <div class="leaderboard-table-container">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Exercise</th>
+                <th>Speed (WPM)</th>
+                <th>Accuracy</th>
+                <th>Date Completed</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <!-- Dynamically rendered local scores rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- VIEW 7: Reports -->
+      <section id="view-reports" class="view-panel">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-weight: 700;">Student Progress reports</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Track your typing performance metrics and export printable summaries.</p>
+        </div>
+
+        <!-- Export tools row -->
+        <div class="report-controls">
+          <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">Export history format:</span>
+          <button class="btn btn-secondary" id="report-export-csv">📂 Export to Excel/CSV</button>
+          <button class="btn btn-primary" id="report-export-pdf">🖨️ Export PDF Progress Report</button>
+        </div>
+
+        <!-- Chart Grid elements -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <div class="grid-card" style="height:350px;">
+            <div class="card-header-small">
+              <span class="card-title-small">📈 Speed Progress (Last 10 Runs)</span>
+            </div>
+            <canvas id="reports-wpm-chart" style="width:100%; height:100%;"></canvas>
+          </div>
+
+          <div class="grid-card" style="height:350px;">
+            <div class="card-header-small">
+              <span class="card-title-small">📊 Accuracy Trends (Last 10 Runs)</span>
+            </div>
+            <canvas id="reports-accuracy-chart" style="width:100%; height:100%;"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 8: Teacher Dashboard -->
+      <section id="view-teacher" class="view-panel">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-weight: 700;">Teacher Dashboard</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Monitor, review, and print records of all registered students in the classroom.</p>
+        </div>
+
+        <div class="teacher-grid">
+          <!-- Sidebar: students list -->
+          <div class="student-list-container">
+            <span class="form-label" style="margin-bottom:12px;">Classroom Students</span>
+            <div class="students-scroller" id="teacher-students-list">
+              <!-- Filled dynamically with students list items -->
+            </div>
+          </div>
+
+          <!-- Content pane: student specific metrics and records -->
+          <div class="grid-card" id="teacher-student-details-pane">
+            <div class="card-header-small" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+              <h3 id="teacher-student-name" style="font-weight:700;">Student Details</h3>
+              <button class="btn btn-secondary" id="teacher-print-report" style="font-size:11px; padding:6px 12px;">Print Report PDF</button>
+            </div>
+
+            <!-- Stats blocks -->
+            <div class="quick-stats-row" style="margin-top:16px;">
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Exercises taken</span>
+                <div class="quick-stat-val" id="teacher-student-lessons">0</div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Best WPM</span>
+                <div class="quick-stat-val" id="teacher-student-wpm">0 WPM</div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Avg Accuracy</span>
+                <div class="quick-stat-val" id="teacher-student-accuracy">0%</div>
+              </div>
+              <div class="quick-stat-box">
+                <span class="quick-stat-label">Practice duration</span>
+                <div class="quick-stat-val" id="teacher-student-hours">0.0 hrs</div>
+              </div>
+            </div>
+
+            <!-- Detailed history list of selected student -->
+            <h4 style="margin-top:20px; margin-bottom:12px; font-weight:700; font-size:13px;">Recent Exercises History</h4>
+            <div class="history-list" id="teacher-student-history-list" style="flex:1;">
+              <!-- Completed items of selected student -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 9: Settings View -->
+      <section id="view-settings" class="view-panel">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-weight: 700;">Settings & Preferences</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Customize display options and configurations to optimize your typing environment.</p>
+        </div>
+
+        <div class="settings-layout">
+          <!-- Card 1: Themes & Sounds -->
+          <div class="settings-section-card">
+            <h3 class="settings-section-title">Visuals & Audio</h3>
+            
+            <div class="switch-control">
+              <div>
+                <span style="font-weight:600; font-size:14px; display:block;">Dark Interface Mode</span>
+                <span style="font-size:11px; color:var(--text-muted);">Toggle deep translucent UI theme.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="theme-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-control">
+              <div>
+                <span style="font-weight:600; font-size:14px; display:block;">Key Sounds Auditory Feedback</span>
+                <span style="font-size:11px; color:var(--text-muted);">Hear keyboard click sounds on key presses.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="sound-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Card 2: Typing Configurations -->
+          <div class="settings-section-card">
+            <h3 class="settings-section-title">Keyboard & Text Options</h3>
+
+            <div class="form-group">
+              <label class="form-label">Khmer Keyboard Layout</label>
+              <select class="form-input" id="settings-keyboard-layout">
+                <option value="nida">NIDA Layout (Default)</option>
+                <option value="standard">Standard Khmer Unicode Layout</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Lesson Display Font Size</label>
+              <select class="form-input" id="settings-font-size">
+                <option value="18">18px (Small)</option>
+                <option value="22" selected>22px (Normal)</option>
+                <option value="28">28px (Large)</option>
+                <option value="34">34px (Extra Large)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Create Profile Modal Screen Overlay -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-box">
+      <h3 class="modal-title">🆕 Create Student Profile</h3>
+      
+      <form id="create-profile-form">
+        <div class="form-group">
+          <label class="form-label" for="profile-name-input">Student Name</label>
+          <input type="text" class="form-input" id="profile-name-input" placeholder="Enter student name..." required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profile-role-input">Role Type</label>
+          <select class="form-input" id="profile-role-input">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher (Unlocks Classroom Dashboards)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Avatar Badge Accent Color</label>
+          <div class="avatar-presets">
+            <div class="avatar-dot active" style="background:#6366f1;" data-color="#6366f1"></div>
+            <div class="avatar-dot" style="background:#06b6d4;" data-color="#06b6d4"></div>
+            <div class="avatar-dot" style="background:#10b981;" data-color="#10b981"></div>
+            <div class="avatar-dot" style="background:#db2777;" data-color="#db2777"></div>
+            <div class="avatar-dot" style="background:#f59e0b;" data-color="#f59e0b"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="hideModal('profile-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Achievement Unlock Notification Alert popup -->
+  <div class="achievement-popup" id="achievement-alert-popup">
+    <span class="achievement-icon" style="font-size:32px;">🏆</span>
+    <div class="achievement-meta">
+      <div style="font-size:10px; color:#f59e0b; font-weight:700; text-transform:uppercase;">Achievement Unlocked!</div>
+      <div class="achievement-name" style="font-weight:700; font-size:14px; margin-top:2px;">First Game</div>
+      <div class="achievement-desc" style="font-size:11px; color:var(--text-muted);">Complete your first typing exercise.</div>
+    </div>
+  </div>
+
+  <!-- Fixed Canvas layers -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Application core modules -->
+  <script src="db.js"></script>
+  <script src="keyboard.js"></script>
+  <script src="charts.js"></script>
+  <script src="typing-engine.js"></script>
+  <script src="minigames.js"></script>
+  <script src="sounds.js"></script>
+  <script src="exporter.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

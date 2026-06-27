@@ -1,14 +1,26 @@
-# Node dependencies
+# Dependency directories
 node_modules/
 
-# Production builds
+# Build outputs
 dist/
+build/
+*.exe
+*.msi
+*.zip
 
-# Logs
-logs/
-*.log
-npm-debug.log*
+# Local database & user records
+database/
+reports/
 
-# OS files
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS generated files
 .DS_Store
 Thumbs.db

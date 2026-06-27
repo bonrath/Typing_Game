@@ -1,7 +1,7 @@
 {
-  "name": "khmer-typing-pad",
+  "name": "khmer-english-typing-master",
   "version": "1.0.0",
-  "description": "Khmer & English Multi-Game Typing Center",
+  "description": "Khmer & English Typing Master - Desktop Application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -9,32 +9,25 @@
     "dist": "electron-builder"
   },
   "keywords": [
-    "khmer",
     "typing",
-    "game",
-    "electron"
+    "master",
+    "khmer",
+    "english",
+    "unicode",
+    "education"
   ],
   "author": "Bonrath",
-  "license": "MIT",
+  "license": "ISC",
   "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3"
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.bonrath.khmertyping",
-    "productName": "KhmerTypingGameCenter",
+    "appId": "com.typingmaster.khmerenglish",
     "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
+      "target": "nsis",
+      "icon": "assets/icon.png"
     },
-    "files": [
-      "index.html",
-      "style.css",
-      "script.js",
-      "main.js"
-    ],
     "directories": {
       "output": "dist"
     }

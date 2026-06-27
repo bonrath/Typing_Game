@@ -1,0 +1,65 @@
+[
+  {
+    "id": "en-1",
+    "title": "Home Row Keys",
+    "description": "Practice the core keys on the middle row: A, S, D, F, J, K, L, and semicolon (;). Keep your fingers rested here.",
+    "difficulty": "easy",
+    "type": "words",
+    "keys": ["a", "s", "d", "f", "j", "k", "l", ";"],
+    "text": "asdf jkl; asdf jkl; a s d f j k l ; asdfjkl; lkasjd f;lkasj dfasdf jkl; asdf jkl; asdfjkl;"
+  },
+  {
+    "id": "en-2",
+    "title": "Top Row Keys",
+    "description": "Introduce Q, W, E, R, T for the left hand and Y, U, I, O, P for the right hand.",
+    "difficulty": "easy",
+    "type": "words",
+    "keys": ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+    "text": "qwer tyui opqt wery uiop qwerty uiopqt weryuiop quiet write type route power toy pot row"
+  },
+  {
+    "id": "en-3",
+    "title": "Bottom Row Keys",
+    "description": "Introduce Z, X, C, V, B for the left hand and N, M, comma (,), period (.), slash (/) for the right hand.",
+    "difficulty": "easy",
+    "type": "words",
+    "keys": ["z", "x", "c", "v", "b", "n", "m", ",", ".", "/"],
+    "text": "zxcv bnm, ./zx cvbn m,./ zxcvbnm ,./zxcv bnm,./ zone box cat vest boat net moon zero come cave"
+  },
+  {
+    "id": "en-4",
+    "title": "Numbers & Basic Symbols",
+    "description": "Learn to type numbers and symbols on the top numerical row.",
+    "difficulty": "medium",
+    "type": "symbols",
+    "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")"],
+    "text": "123 456 789 012 345 678 90! @#$ %^& *() 100% discount for $50 value, call +1-800-555-0199 now!"
+  },
+  {
+    "id": "en-5",
+    "title": "Short Sentences",
+    "description": "Type simple sentences to practice spacing and basic punctuation.",
+    "difficulty": "medium",
+    "type": "sentences",
+    "keys": [],
+    "text": "The quick brown fox jumps over the lazy dog. Hard work beats talent when talent fails to work hard. Keep your eyes on the screen and your hands on the home row. Typing fast is a skill that takes time to master."
+  },
+  {
+    "id": "en-6",
+    "title": "Paragraph Practice",
+    "description": "Intermediate level paragraph focusing on consistency, rhythm, and accuracy.",
+    "difficulty": "hard",
+    "type": "paragraphs",
+    "keys": [],
+    "text": "Modern computers process billions of instructions per second, yet human communication remains limited by how fast we can type or speak. Becoming a typing master is not just about raw speed. It is about training muscle memory so that thoughts flow directly from the brain onto the screen without conscious physical effort."
+  },
+  {
+    "id": "en-7",
+    "title": "Expert Mixed Texts",
+    "description": "Complex text with mixed capitalization, punctuation, and coding symbols.",
+    "difficulty": "expert",
+    "type": "paragraphs",
+    "keys": [],
+    "text": "const typingMaster = { title: 'Khmer & English Typing Master', version: 1.0, isOffline: true, modes: ['Practice', 'TimeAttack', 'StoryMode'], calculateWPM: (chars, time) => Math.round((chars / 5) / time) }; console.log(`Application loaded successfully! Current status: ${typingMaster.isOffline ? 'Offline' : 'Online'}`);"
+  }
+]
